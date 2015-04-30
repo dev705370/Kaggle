@@ -16,6 +16,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import BernoulliRBM
 from sklearn.pipeline import Pipeline
 from sklearn.decomposition import FastICA
+from sklearn.preprocessing import Binarizer
 
 class Compare():
     def __init__(self, _path, trainData):
@@ -32,9 +33,9 @@ class Compare():
 #         self.plotSVM(X, Y)
 #         self.plotKneighbours(X, Y)
 #         self.plotExtraTree(X, Y)
-        self.plotAdaBoost(X, Y)
+#         self.plotAdaBoost(X, Y)
 #         self.plotGradientBoosting(X, Y)
-#         self.plotRandomForest(X, Y)
+        self.plotRandomForest(X, Y)
 #         self.logisticReg(X, Y)
 #         self.bernoulliRBM(X, Y)
 
@@ -60,19 +61,19 @@ class Compare():
         lr = LogisticRegression(tol=0.00001)
         score = cross_validation.cross_val_score(lr, X, Y, n_jobs = -1)
         print 'Logistic Regression score = ', np.mean(score), ' and time=', time.clock() - startTime, ' secs'
-        
-    
+           
     def bernoulliRBM(self, X, Y):
         startTime = time.clock()
         print 'running bernoulli RBM'
+        br = Binarizer().fit(X)
+        X = br.transform(X)
+        print 'x transformed'
         lr = LogisticRegression()
-        br = BernoulliRBM()
+        br = BernoulliRBM(learning_rate = 0.01, n_iter = 5000, batch_size=1000, verbose=True)
         classifier = Pipeline(steps=[('br', br), ('lr', lr)])
-        br.n_components = 100
         score = cross_validation.cross_val_score(classifier, X, Y, n_jobs = -1)
         print 'Bernoulli RBM score = ', np.mean(score), ' and time=', time.clock() - startTime, ' secs'
-        
-        
+              
     def compareAll(self, X, Y):
         startTime = time.clock()
         print 'running svm'
@@ -145,7 +146,7 @@ class Compare():
         x = []
         for i in range(1, 11) :
             start = time.clock()
-            rfc = RandomForestClassifier(n_estimators=i*500, )
+            rfc = RandomForestClassifier(n_estimators=i*500, verbose=1)
             score = cross_validation.cross_val_score(rfc, X, Y, n_jobs = -1)
             meanScore.append(np.mean(score))
             x.append(i*500)
@@ -206,3 +207,18 @@ class Compare():
         plt.scatter(x, meanScore, s = 5, c = 'red')
         plt.savefig('GradientBoosting.png')
         plt.close()
+        
+        
+    
+from DataFormating import DataFormating as DF
+import time
+
+if __name__ == '__main__' :
+    _path = 'E://Python//Workspace//KaggleData//otto group'
+    start = time.clock()
+    trainData = DF.formatTrainData(_path)
+    testData = DF.formatTestData(_path)
+    print 'Data formatted'
+    _cmp = Compare(_path, trainData)
+    _cmp.run()
+    print 'run time is ', time.clock() - start, 'secs'
